@@ -39,7 +39,7 @@ function showMyStories() {
 
 	// loop through all of our stories and generate HTML for them
 	for (let story of myStories) {
-		const $story = generateStoryMarkup(story);
+		const $story = generateStoryMarkup(story, true);
 		$myStoriesList.append($story);
 	}
 
@@ -52,11 +52,16 @@ function showMyStories() {
  *
  * Returns the markup for the story.
  */
-function generateStoryMarkup(story) {
+function generateStoryMarkup(story, isMyStories) {
 	// console.debug("generateStoryMarkup", story);
 
 	const hostName = story.getHostName();
   let favoritesMarkup = "";
+  let trashMarkup = "";
+
+  if (isMyStories) {
+    trashMarkup = `<span class="trash"></span>`
+  }
   if (currentUser) {
     favoriteStories = currentUser.favorites;
     const filteredStories = favoriteStories.filter(val => val.storyId === story.storyId);
@@ -68,6 +73,7 @@ function generateStoryMarkup(story) {
   }
 	return $(`
       <li id="${story.storyId}">
+        ${trashMarkup}
         ${favoritesMarkup}
         <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}

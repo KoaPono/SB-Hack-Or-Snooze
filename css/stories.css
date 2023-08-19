@@ -37,10 +37,19 @@
   display: block;
 }
 
+.star {
+  cursor: pointer;
+}
+
 .star.uncheck::before{
   content: "☆";
 }
 
 .star.check::before{
   content: "★";
+}
+
+.trash::before {
+  content: "🗑";
+  cursor: pointer;
 }
