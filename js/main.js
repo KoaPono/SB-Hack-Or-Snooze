@@ -9,10 +9,16 @@ const $allStoriesList = $("#all-stories-list");
 
 const $loginForm = $("#login-form");
 const $signupForm = $("#signup-form");
+const $storySubmitForm = $("#story-submit-form");
 
+const $storySubmit = $("#story-submit");
+
+const $navStorySubmit = $("#nav-story-submit");
 const $navLogin = $("#nav-login");
 const $navUserProfile = $("#nav-user-profile");
 const $navLogOut = $("#nav-logout");
+
+
 
 /** To make it easier for individual components to show just themselves, this
  * is a useful function that hides pretty much everything on the page. After
@@ -25,13 +31,18 @@ function hidePageComponents() {
     $loginForm,
     $signupForm,
   ];
-  components.forEach(c => c.hide());
+
+  components.forEach(c => {
+    c.hide();
+  });
 }
 
 /** Overall function to kick off the app. */
 
 async function start() {
   console.debug("start");
+
+  $storySubmitForm.hide();
 
   // "Remember logged-in user" and log in, if credentials in localStorage
   await checkForRememberedUser();

@@ -113,4 +113,26 @@ function updateUIOnUserLogin() {
   $allStoriesList.show();
 
   updateNavOnLogin();
+  putStoriesOnPage();
 }
+
+async function favoriteStory(evt) {
+  console.debug("favoriteStory");
+  if (evt.target.nodeName === "SPAN") {
+    let method = "";
+    if (evt.target.classList.contains("uncheck")) {
+      evt.target.classList.remove("uncheck");
+      evt.target.classList.add("check");
+      method = "POST"
+    } else {
+      evt.target.classList.add("uncheck");
+      evt.target.classList.remove("check");
+      method = "DELETE"
+    }
+    const storyId = evt.target.parentElement.id;
+    currentUser.favorites.push(storyId);
+    const resp = await User.addOrDeleteUserFavorite(currentUser.loginToken, currentUser.username, storyId, method);
+  }
+}
+
+$($allStoriesList).on("click", favoriteStory);

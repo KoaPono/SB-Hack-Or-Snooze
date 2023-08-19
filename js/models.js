@@ -24,8 +24,11 @@ class Story {
   /** Parses hostname out of URL and returns it. */
 
   getHostName() {
-    // UNIMPLEMENTED: complete this function!
-    return "hostname.com";
+    let domain = this.url.replace(/^(https?:\/\/)/, '');
+    domain = domain.split('/')[0];
+    domain = domain.replace(/^www\./, '');
+
+    return domain;
   }
 }
 
@@ -72,9 +75,9 @@ class StoryList {
    *
    * Returns the new Story instance
    */
-
-  async addStory( /* user, newStory */) {
-    // UNIMPLEMENTED: complete this function!
+  async addStory(user, newStory) {
+    const {loginToken} = user;
+    return await axios.post(`${BASE_URL}/stories`, {"token": loginToken, "story": newStory});
   }
 }
 
@@ -190,6 +193,21 @@ class User {
       );
     } catch (err) {
       console.error("loginViaStoredCredentials failed", err);
+      return null;
+    }
+  }
+
+  static async addOrDeleteUserFavorite(token, username, storyId, method) {
+    try {
+      const response = await axios({
+        url: `${BASE_URL}/users/${username}/favorites/${storyId}`,
+        method: `${method}`,
+        params: { token },
+      });
+
+      return response;
+    } catch (err) {
+      console.error("addOrDeleteUserFavorite failed", err);
       return null;
     }
   }

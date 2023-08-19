@@ -18,7 +18,6 @@
 
 
 /* Individual stories */
-
 .story-link {
   color: black;
   font-size: 0.85rem;
@@ -36,4 +35,12 @@
 
 .story-user {
   display: block;
+}
+
+.star.uncheck::before{
+  content: "☆";
+}
+
+.star.check::before{
+  content: "★";
 }
