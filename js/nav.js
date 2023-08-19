@@ -28,6 +28,18 @@ function navOpenNewStoryForm(evt) {
 }
 $navStorySubmit.on("click", navOpenNewStoryForm);
 
+function navOpenFavoriteStories(evt) {
+  console.debug("navOpenFavoriteStories", evt);
+  showFavoriteStories();
+}
+$navFavorites.on("click", navOpenFavoriteStories);
+
+function navOpenMyStories(evt) {
+  console.debug("navOpenMyStories", evt);
+  showMyStories();
+}
+$navMyStories.on("click", navOpenMyStories);
+
 /** When a user first logins in, update the navbar to reflect that. */
 function updateNavOnLogin() {
   console.debug("updateNavOnLogin");

@@ -3,6 +3,7 @@
 // This is the global list of the stories, an instance of StoryList
 let storyList;
 let favoriteStories;
+let myStories;
 
 /** Get and show stories when site first loads. */
 
@@ -11,6 +12,38 @@ async function getAndShowStoriesOnStart() {
 	$storiesLoadingMsg.remove();
 
 	putStoriesOnPage();
+}
+
+function showFavoriteStories() {
+	console.debug("showFavoriteStories");
+
+	$allStoriesList.hide();
+  $myStoriesList.hide();
+  $favoriteStoriesList.empty();
+
+	// loop through all of our stories and generate HTML for them
+	for (let story of favoriteStories) {
+		const $story = generateStoryMarkup(story);
+		$favoriteStoriesList.append($story);
+	}
+
+	$favoriteStoriesList.show();
+}
+
+function showMyStories() {
+  console.debug("showMyStories");
+
+	$allStoriesList.hide();
+  $favoriteStoriesList.hide();
+  $myStoriesList.empty();
+
+	// loop through all of our stories and generate HTML for them
+	for (let story of myStories) {
+		const $story = generateStoryMarkup(story);
+		$myStoriesList.append($story);
+	}
+
+	$myStoriesList.show();
 }
 
 /**
@@ -25,7 +58,7 @@ function generateStoryMarkup(story) {
 	const hostName = story.getHostName();
   let favoritesMarkup = "";
   if (currentUser) {
-    const favoriteStories = currentUser.favorites;
+    favoriteStories = currentUser.favorites;
     const filteredStories = favoriteStories.filter(val => val.storyId === story.storyId);
     if (filteredStories.length > 0) {
       favoritesMarkup = `<span class="star check"></span>`
@@ -70,7 +103,8 @@ async function submitStory(evt) {
   const url = $("#new-story-url").val();
 
   const newStory = {title, author, url};
-  await storyList.addStory(currentUser, newStory);
+  const ret = await storyList.addStory(currentUser, newStory);
+  myStories.push(new Story(ret.data.story));
   console.log("story Added");
   getAndShowStoriesOnStart();
 

@@ -10,21 +10,22 @@ let currentUser;
 /** Handle login form submission. If login ok, sets up the user instance */
 
 async function login(evt) {
-  console.debug("login", evt);
-  evt.preventDefault();
+	console.debug("login", evt);
+	evt.preventDefault();
 
-  // grab the username and password
-  const username = $("#login-username").val();
-  const password = $("#login-password").val();
+	// grab the username and password
+	const username = $("#login-username").val();
+	const password = $("#login-password").val();
 
-  // User.login retrieves user info from API and returns User instance
-  // which we'll make the globally-available, logged-in user.
-  currentUser = await User.login(username, password);
+	// User.login retrieves user info from API and returns User instance
+	// which we'll make the globally-available, logged-in user.
+	currentUser = await User.login(username, password);
+  myStories = currentUser.ownStories;
 
-  $loginForm.trigger("reset");
+	$loginForm.trigger("reset");
 
-  saveUserCredentialsInLocalStorage();
-  updateUIOnUserLogin();
+	saveUserCredentialsInLocalStorage();
+	updateUIOnUserLogin();
 }
 
 $loginForm.on("submit", login);
@@ -32,21 +33,21 @@ $loginForm.on("submit", login);
 /** Handle signup form submission. */
 
 async function signup(evt) {
-  console.debug("signup", evt);
-  evt.preventDefault();
+	console.debug("signup", evt);
+	evt.preventDefault();
 
-  const name = $("#signup-name").val();
-  const username = $("#signup-username").val();
-  const password = $("#signup-password").val();
+	const name = $("#signup-name").val();
+	const username = $("#signup-username").val();
+	const password = $("#signup-password").val();
 
-  // User.signup retrieves user info from API and returns User instance
-  // which we'll make the globally-available, logged-in user.
-  currentUser = await User.signup(username, password, name);
+	// User.signup retrieves user info from API and returns User instance
+	// which we'll make the globally-available, logged-in user.
+	currentUser = await User.signup(username, password, name);
 
-  saveUserCredentialsInLocalStorage();
-  updateUIOnUserLogin();
+	saveUserCredentialsInLocalStorage();
+	updateUIOnUserLogin();
 
-  $signupForm.trigger("reset");
+	$signupForm.trigger("reset");
 }
 
 $signupForm.on("submit", signup);
@@ -57,9 +58,9 @@ $signupForm.on("submit", signup);
  */
 
 function logout(evt) {
-  console.debug("logout", evt);
-  localStorage.clear();
-  location.reload();
+	console.debug("logout", evt);
+	localStorage.clear();
+	location.reload();
 }
 
 $navLogOut.on("click", logout);
@@ -73,13 +74,14 @@ $navLogOut.on("click", logout);
  */
 
 async function checkForRememberedUser() {
-  console.debug("checkForRememberedUser");
-  const token = localStorage.getItem("token");
-  const username = localStorage.getItem("username");
-  if (!token || !username) return false;
+	console.debug("checkForRememberedUser");
+	const token = localStorage.getItem("token");
+	const username = localStorage.getItem("username");
+	if (!token || !username) return false;
 
-  // try to log in with these credentials (will be null if login failed)
-  currentUser = await User.loginViaStoredCredentials(token, username);
+	// try to log in with these credentials (will be null if login failed)
+	currentUser = await User.loginViaStoredCredentials(token, username);
+  myStories = currentUser.ownStories;
 }
 
 /** Sync current user information to localStorage.
@@ -89,11 +91,11 @@ async function checkForRememberedUser() {
  */
 
 function saveUserCredentialsInLocalStorage() {
-  console.debug("saveUserCredentialsInLocalStorage");
-  if (currentUser) {
-    localStorage.setItem("token", currentUser.loginToken);
-    localStorage.setItem("username", currentUser.username);
-  }
+	console.debug("saveUserCredentialsInLocalStorage");
+	if (currentUser) {
+		localStorage.setItem("token", currentUser.loginToken);
+		localStorage.setItem("username", currentUser.username);
+	}
 }
 
 /******************************************************************************
@@ -108,31 +110,63 @@ function saveUserCredentialsInLocalStorage() {
  */
 
 function updateUIOnUserLogin() {
-  console.debug("updateUIOnUserLogin");
+	console.debug("updateUIOnUserLogin");
 
-  $allStoriesList.show();
+	$allStoriesList.show();
 
-  updateNavOnLogin();
-  putStoriesOnPage();
+	updateNavOnLogin();
+	putStoriesOnPage();
 }
 
 async function favoriteStory(evt) {
-  console.debug("favoriteStory");
-  if (evt.target.nodeName === "SPAN") {
-    let method = "";
-    if (evt.target.classList.contains("uncheck")) {
-      evt.target.classList.remove("uncheck");
-      evt.target.classList.add("check");
-      method = "POST"
-    } else {
-      evt.target.classList.add("uncheck");
-      evt.target.classList.remove("check");
-      method = "DELETE"
+	console.debug("favoriteStory");
+	if (evt.target.nodeName === "SPAN") {
+		let method = "";
+		const isAddingFavorite = evt.target.classList.contains("uncheck");
+		if (isAddingFavorite) {
+			evt.target.classList.remove("uncheck");
+			evt.target.classList.add("check");
+			method = "POST";
+		} else {
+			evt.target.classList.add("uncheck");
+			evt.target.classList.remove("check");
+			method = "DELETE";
+		}
+		const storyId = evt.target.parentElement.id;
+		const resp = await User.addOrDeleteUserFavorite(
+			currentUser.loginToken,
+			currentUser.username,
+			storyId,
+			method
+		);
+    const favStory = await getStory(storyId);
+		if (isAddingFavorite) {
+			currentUser.favorites.push(favStory);
+			favoriteStories = currentUser.favorites;
+		} else {
+      favoriteStories = currentUser.favorites.filter(val => val.storyId !== storyId);
+      currentUser.favorites = favoriteStories;
     }
-    const storyId = evt.target.parentElement.id;
-    currentUser.favorites.push(storyId);
-    const resp = await User.addOrDeleteUserFavorite(currentUser.loginToken, currentUser.username, storyId, method);
-  }
+	}
 }
 
 $($allStoriesList).on("click", favoriteStory);
+
+async function getStory(storyId) {
+	const response = await axios({
+		url: `${BASE_URL}/stories/${storyId}`,
+		method: "GET",
+	});
+
+	let { story } = response.data;
+
+	return new Story({
+		author: story.author,
+		createdAt: story.createdAt,
+		storyId: story.storyId,
+		title: story.title,
+		updatedAt: story.updatedAt,
+		url: story.url,
+		username: story.username,
+	});
+}
