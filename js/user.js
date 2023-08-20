@@ -20,7 +20,7 @@ async function login(evt) {
 	// User.login retrieves user info from API and returns User instance
 	// which we'll make the globally-available, logged-in user.
 	currentUser = await User.login(username, password);
-  myStories = currentUser.ownStories;
+	myStories = currentUser.ownStories;
 
 	$loginForm.trigger("reset");
 
@@ -81,7 +81,7 @@ async function checkForRememberedUser() {
 
 	// try to log in with these credentials (will be null if login failed)
 	currentUser = await User.loginViaStoredCredentials(token, username);
-  myStories = currentUser.ownStories;
+	myStories = currentUser.ownStories;
 }
 
 /** Sync current user information to localStorage.
@@ -121,36 +121,46 @@ function updateUIOnUserLogin() {
 async function favoriteStory(evt) {
 	console.debug("favoriteStory");
 	if (evt.target.nodeName === "SPAN") {
-		let method = "";
-		const isAddingFavorite = evt.target.classList.contains("uncheck");
-		if (isAddingFavorite) {
-			evt.target.classList.remove("uncheck");
-			evt.target.classList.add("check");
-			method = "POST";
-		} else {
-			evt.target.classList.add("uncheck");
-			evt.target.classList.remove("check");
-			method = "DELETE";
+    const storyId = evt.target.parentElement.id;
+		if (evt.target.classList.contains("star")) {
+			let method = "";
+			const isAddingFavorite = evt.target.classList.contains("uncheck");
+			if (isAddingFavorite) {
+				evt.target.classList.remove("uncheck");
+				evt.target.classList.add("check");
+				method = "POST";
+			} else {
+				evt.target.classList.add("uncheck");
+				evt.target.classList.remove("check");
+				method = "DELETE";
+			}
+			const resp = await User.addOrDeleteUserFavorite(
+				currentUser.loginToken,
+				currentUser.username,
+				storyId,
+				method
+			);
+			const favStory = await getStory(storyId);
+			if (isAddingFavorite) {
+				currentUser.favorites.push(favStory);
+				favoriteStories = currentUser.favorites;
+			} else {
+				favoriteStories = currentUser.favorites.filter(
+					(val) => val.storyId !== storyId
+				);
+				currentUser.favorites = favoriteStories;
+			}
 		}
-		const storyId = evt.target.parentElement.id;
-		const resp = await User.addOrDeleteUserFavorite(
-			currentUser.loginToken,
-			currentUser.username,
-			storyId,
-			method
-		);
-    const favStory = await getStory(storyId);
-		if (isAddingFavorite) {
-			currentUser.favorites.push(favStory);
-			favoriteStories = currentUser.favorites;
-		} else {
-      favoriteStories = currentUser.favorites.filter(val => val.storyId !== storyId);
-      currentUser.favorites = favoriteStories;
+    if (evt.target.classList.contains("trash")) {
+      const resp = await removeStory(storyId, currentUser.loginToken);
+      evt.target.parentElement.innerHTML = "";
     }
 	}
 }
 
 $($allStoriesList).on("click", favoriteStory);
+$($favoriteStoriesList).on("click", favoriteStory);
+$($myStoriesList).on("click", favoriteStory);
 
 async function getStory(storyId) {
 	const response = await axios({
@@ -169,4 +179,14 @@ async function getStory(storyId) {
 		url: story.url,
 		username: story.username,
 	});
+}
+
+async function removeStory(storyId, token) {
+	const response = await axios({
+		url: `${BASE_URL}/stories/${storyId}`,
+		method: "DELETE",
+    data: {token: token}
+	});
+
+	return response;
 }
