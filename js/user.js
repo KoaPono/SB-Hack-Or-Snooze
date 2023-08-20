@@ -153,7 +153,9 @@ async function favoriteStory(evt) {
 		}
     if (evt.target.classList.contains("trash")) {
       const resp = await removeStory(storyId, currentUser.loginToken);
-      evt.target.parentElement.innerHTML = "";
+      evt.target.parentElement.parentElement.innerHTML = "";
+      storyList = await StoryList.getStories();
+      showMyStories();
     }
 	}
 }
